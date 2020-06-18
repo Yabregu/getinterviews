@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="project.repository.StaffMapper">
+<sql id="sqlStaff">
+select 
+st.idstaff as id,
+usu.iduser as 'user.id',
+usu.name as 'user.name',
+
+usu.first_name as 'user.firstName',
+usu.last_name as 'user.lastName' ,
+usu.email as 'user.email',
+usu.phone as 'user.phone',
+st.department,
+st.area
+from staff st 
+left join  user usu on st.user_id = usu.iduser
+
+</sql>
+<insert id="insertStaff"
+parameterType="project.model.StaffDTO">
+insert into staff (area,department,user_id)
+values (#{area},#{department},#{user.id})
+</insert>
+<update id="updateStaff"
+parameterType="project.model.StaffDTO">
+update staff 
+set
+area =#{area},
+department = #{department}
+where idstaff = #{id}
+</update>
+<delete id="deleteStaff"
+parameterType="project.model.StaffDTO">
+delete from  staff
+where idstaff = #{id}
+</delete>
+<select id="getStaffs"
+resultType="project.model.StaffDTO">
+<include refid="sqlStaff"/>
+ 
+</select> 
+<select id="getIndicators"
+resultType="project.model.StaffDTO">
+select 
+st.idstaff as id,
+(select count(1) from client cli1 where staff_id = st.idstaff
+and (select count(1) 
+	from interview in2 
+    where in2.client_id = cli1.idclient
+    and in2.date_end_job > now())
+    )
+    / (select count(1) from client where staff_id = st.idstaff) as  percentClientsWithJob,
+	
+	(select count(1) 
+	from interview in1
+    left join client cli1 on in1.client_id = cli1.idclient
+	where  cli1.staff_id = st.idstaff
+	and (in1.date between date_sub( now(), interval 7 day) and now() )  ) as interviewsClientsWeek
+from staff st;
+
+ 
+</select> 
+
+</mapper>

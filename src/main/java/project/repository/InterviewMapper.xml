@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="project.repository.InterviewMapper">
+<sql id="sqlInterview">
+select inte.idinterview as id,
+inte.company_name as companyName,
+inte.date as date,
+date_format(inte.date,'%d-%m-%Y') as dateText,
+inte.time as time,
+date_format(inte.time,'%h:%i %p') as timeText,
+inte.date_start_job as dateStartJob,
+date_format(inte.date_start_job,'%d-%m-%Y') as dateStartJobText,
+inte.date_end_job as dateEndJob,
+date_format(inte.date_end_job,'%d-%m-%Y') as dateEndJobText
+from interview inte
+
+</sql>
+<select id="getInterviews"
+parameterType="project.model.ClientDTO"
+resultType="project.model.InterviewDTO">
+<include refid="sqlInterview"/>
+where inte.client_id = (select idclient from client where user_id = #{user.id})
+</select>
+<insert id="insertInterview"
+parameterType="project.model.InterviewDTO">
+insert into interview (client_id,company_name,date,time,date_start_job,date_end_job)
+values (#{client.id}  ,#{companyName} ,#{date},#{time},#{dateStartJob},#{dateEndJob})
+</insert>
+<update id="updateInterview"
+parameterType="project.model.InterviewDTO">
+update interview 
+set
+company_name = #{companyName},
+date =#{date},
+time = #{time},
+date_start_job = #{dateStartJob},
+date_end_job = #{dateEndJob}
+where idinterview = #{id}
+</update>
+<delete id="deleteInterview"
+parameterType="project.model.InterviewDTO">
+delete from  interview
+where idinterview = #{id}
+</delete> 
+
+</mapper>

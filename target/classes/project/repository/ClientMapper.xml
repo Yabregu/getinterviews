@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="project.repository.ClientMapper">
+<sql id="sqlClient">
+select 
+cli.idclient as id,
+usu.iduser as 'user.id',
+usu.name as 'user.name',
+
+usu.first_name as 'user.firstName',
+usu.last_name as 'user.lastName' ,
+usu.email as 'user.email',
+usu.phone as 'user.phone',
+
+cli.staff_id as 'staff.id',
+ifnull(usust.first_name,'None') as 'staff.user.firstName',
+ifnull(usust.last_name,'') as 'staff.user.lastName'
+from client cli
+left join  user usu on cli.user_id = usu.iduser
+left join staff st on st.idstaff = cli.staff_id
+left join user usust on usust.iduser = st.user_id
+</sql>
+<insert id="insertClient"
+parameterType="project.model.ClientDTO">
+insert into client (staff_id,user_id)
+values (ifnull(#{staff.id},(select idstaff from staff where user_id = #{staff.user.id}) )   ,#{user.id})
+</insert>
+<update id="updateClient"
+parameterType="project.model.ClientDTO">
+update client 
+set
+staff_id = ifnull(#{staff.id},(select idstaff from staff where user_id = #{staff.user.id}) )
+where idclient = #{id}
+</update>
+<delete id="deleteClient"
+parameterType="project.model.ClientDTO">
+delete from  client
+where idclient = #{id}
+</delete>
+<delete id="deleteAllInterview"
+parameterType="project.model.ClientDTO">
+delete from  interview
+where client_id = #{id}
+</delete>
+<delete id="deleteAllResume"
+parameterType="project.model.ClientDTO">
+delete from  resume
+where client_id = #{id}
+</delete>
+<select id="getClientsAdmin"
+resultType="project.model.ClientDTO">
+<include refid="sqlClient"/>
+ 
+</select> 
+<select id="getClientById"
+parameterType="project.model.ClientDTO"
+resultType="project.model.ClientDTO">
+<include refid="sqlClient"/>
+ where cli.idclient = #{id}
+</select> 
+<sql id="sqlIndicators">
+select cli.idclient as id,
+ifnull(datediff(now(),max(inte.date)),0) as numberDaysLastInterview,
+ifnull( date_format(max(inte.date),'%d-%m-%Y') ,'') as dateLastInterviewText,
+sum( if(inte.date between date_sub(now(),interval 7 day) and now() ,1,0) ) as interviewsWeek
+from client cli
+left join interview inte on inte.client_id = cli.idclient and now() > inte.date 
+left join staff st on st.idstaff = cli.staff_id
+</sql>
+<select id="getIndicatorsAdmin"
+resultType="project.model.ClientDTO">
+
+<include refid="sqlIndicators"/>
+group by cli.idclient
+ 
+</select> 
+<update id="updateClientsNullStaff">
+update client
+set staff_id = null
+where staff_id = #{id}
+</update>
+
+
+
+<select id="getClientsStaff"
+resultType="project.model.ClientDTO"
+parameterType="project.model.StaffDTO">
+<include refid="sqlClient"/>
+ where st.user_id = #{user.id}
+</select> 
+
+<select id="getIndicatorsStaff"
+resultType="project.model.ClientDTO"
+parameterType="project.model.StaffDTO">
+<include refid="sqlIndicators"/>
+ where st.user_id = #{user.id}
+group by cli.idclient
+</select> 
+</mapper>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="project.repository.ResumeMapper">
+<sql id="sqlResume">
+select resu.idresume as id,
+resu.job_title as jobTitle,
+resu.description as description,
+resu.salary_goal as salaryGoal,
+resu.photo as photo,
+resu.date_can_start_job as dateCanStartJob,
+date_format(resu.date_can_start_job,'%d-%m-%Y') as dateCanStartJobText,
+us.first_name as 'client.user.firstName',
+us.last_name as 'client.user.lastName',
+us.phone as 'client.user.phone',
+us.email as 'client.user.email'
+from resume resu
+left join client cli on cli.idclient = resu.client_id 
+left join user us on us.iduser = cli.user_id
+</sql>
+<select id="getResumes"
+parameterType="project.model.ClientDTO"
+resultType="project.model.ResumeDTO">
+<include refid="sqlResume"/>
+where resu.client_id = (select idclient from client where user_id = #{user.id})
+</select>
+<select id="getResumeById"
+parameterType="project.model.ResumeDTO"
+resultType="project.model.ResumeDTO">
+<include refid="sqlResume"/>
+where resu.idresume = #{id}
+</select>
+<insert id="insertResume"
+parameterType="project.model.ResumeDTO">
+insert into resume (client_id,  job_title,  date_can_start_job,description,salary_goal)
+values (#{client.id}  ,#{jobTitle},#{dateCanStartJob},#{description},#{salaryGoal})
+</insert>
+<update id="updateResume"
+parameterType="project.model.ResumeDTO">
+update resume 
+set
+job_title =#{jobTitle},
+description = #{description},
+date_can_start_job = #{dateCanStartJob},
+salary_goal = #{salaryGoal}
+where idresume = #{id}
+</update>
+<update id="updateResumePhoto"
+parameterType="project.model.ResumeDTO">
+update resume
+set
+photo = #{photo}
+where idresume = #{id}
+</update>
+<delete id="deleteResume"
+parameterType="project.model.ResumeDTO">
+delete from  resume
+where idresume = #{id}
+</delete> 
+<select id="getMaxIdResume" resultType="Integer">
+select max(idresume) from resume;
+</select>
+</mapper>

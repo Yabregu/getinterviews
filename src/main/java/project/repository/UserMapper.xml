@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="project.repository.UserMapper">
+<sql id="sqlUser">
+select 
+usu.iduser as id,
+usu.name as name,
+usu.first_name as firstName,
+usu.last_name as lastName,
+usu.type_id as 'type.id',
+tu.name as 'type.name',
+cli.idclient as 'client.id'
+from user usu
+left join client cli on cli.user_id = usu.iduser
+left join user_type tu on tu.iduser_type = usu.type_id
+
+</sql>
+<select id="getUserByNamePass"
+resultType="project.model.UserDTO"
+parameterType="project.model.UserDTO">
+<include refid="sqlUser"/>
+
+where usu.name = #{name}
+and usu.pass = #{pass}
+</select> 
+<select id="getUserById"
+resultType="project.model.UserDTO"
+parameterType="project.model.UserDTO">
+<include refid="sqlUser"/>
+
+where usu.iduser = #{id}
+</select> 
+<insert id="insertUser" parameterType="project.model.UserDTO">
+insert into user (name,pass,first_name,last_name,email,phone,type_id)
+values (#{name},#{pass},#{firstName},#{lastName},#{email},#{phone},#{type.id})
+</insert>
+<update id="updateUser" parameterType="project.model.UserDTO">
+update user
+set
+first_name = #{firstName},
+last_name = #{lastName},
+email = #{email},
+phone = #{phone}
+where iduser = #{id}
+</update>
+<delete id ="deleteUser" parameterType="project.model.UserDTO">
+delete from user
+where iduser = #{id}
+</delete>
+<select id="getMaxIdUser" resultType="Integer">
+select max(iduser) from user
+</select>
+</mapper>
